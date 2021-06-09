@@ -1,0 +1,475 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>如何使用Redux？ | Gridea</title>
+<link rel="shortcut icon" href="https://davidyangblog.github.io/favicon.ico?v=1623208831957">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://davidyangblog.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="如何使用Redux？ | Gridea - Atom Feed" href="https://davidyangblog.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="「如何」系列第二篇，通过一个案例来介绍Redux的用法。
+
+零、前言
+背景
+本次需求中，要求实现培训文档功能。核心功能是：每个任务下对应一定数量的培训文档，具有权限的用户可以进行上传、下载、删除文档三种操作。本文只选择了上传功能为案例，展示..." />
+    <meta name="keywords" content="" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://davidyangblog.github.io">
+  <img class="avatar" src="https://davidyangblog.github.io/images/avatar.png?v=1623208831957" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              如何使用Redux？
+            </h2>
+            <div class="post-info">
+              <span>
+                2021-06-07
+              </span>
+              <span>
+                7 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>「如何」系列第二篇，通过一个案例来介绍Redux的用法。</p>
+<!-- more -->
+<h1 id="零-前言">零、前言</h1>
+<h2 id="背景">背景</h2>
+<p>本次需求中，要求实现培训文档功能。核心功能是：每个任务下对应一定数量的培训文档，具有权限的用户可以进行上传、下载、删除文档三种操作。本文只选择了上传功能为案例，展示通过 Redux 处理数据和更新视图的思路以及代码结构，代码省略了业务逻辑相关部分。</p>
+<h2 id="分析">分析</h2>
+<p>Pioneer 项目前端将任务进行了抽象化，定义了一个 Task 类，所有 Task 类的相关操作可以通过其成员方法来实现，同时将修改动作交由 reducer 来实时更新 redux 中的 Task 数据。</p>
+<p>由于目前并没有将 Task下的文档共享到其他组件的硬性需求，我这是强行使用 Redux 来熟悉项目，增加自己的工作量，不够闲的朋友请勿尝试。</p>
+<p>先复习一下 Redux 的工作流程：<img src="https://gitee.com/yxon123/gitee-sources/raw/master//Images/image-20210609105516763.png" alt="image-20210609105516763" loading="lazy"></p>
+<p>根据 Redux 的工作流和业务逻辑，我将要上传培训文档应该会经历以下步骤</p>
+<ol>
+<li>在 <code>ReactComponent</code>中选择文件（<code>data</code>），点击上传按钮</li>
+<li>触发 <code>ActionCreator</code>，调用后端接口，上传 <code>data</code></li>
+<li><code>ActionCreator</code>根据调用结果，向 <code>Reducer</code>发送不同 <code>action</code></li>
+<li><code>action</code>携带 <code>data</code>进入 <code>Reducer</code></li>
+<li><code>Reducer</code>从 <code>store</code> 获取当前 <code>state</code>，根据 <code>actionType</code>对 <code>state</code>进行修改</li>
+<li><code>Reducer</code>向 <code>store</code>返回新的 <code>state</code></li>
+<li><code>store</code>向 <code>ReactComponent</code>返回 <code>newState</code>（一般为容器组件（<code>Container</code>））</li>
+</ol>
+<p>前置知识：React, TypeScript</p>
+<p>新增知识：Redux Flow, react-redux</p>
+<p>拓展知识：<a href="https://www.typescriptlang.org/docs/handbook/enums.html?azure-portal=true">TypeScriptr-enum</a>, MVVM, MVC</p>
+<p>以下是思路展示：</p>
+<h1 id="一-直接调用后端-api">一、 直接调用后端 API</h1>
+<h2 id="server-proxy"><code>server-proxy</code></h2>
+<p><strong>引入axios并对其进行封装</strong></p>
+<p>在此文件中定义直接调用接口的方法 <code>async uploadDocs()</code></p>
+<pre><code class="language-tsx">async function uploadDocs(id, docsData) {
+    const { backendAPI } = config;
+    //上传文件时，需要用FormData 来构造post的body部分
+    const taskData = new FormData();
+    taskData.append(`file`, docsData.file);
+    taskData.append(`description`,docsData.description);
+
+    try {
+        //此处用到了封装过的 axios，也可以采用其他 HTTP 库
+        const response = await Axios.post(`${backendAPI}/tasks/${id}/docs`,taskData, {
+            proxy: config.proxy,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        return response
+    } catch (errorData) {
+        throw generateError(errorData);
+    }
+}
+</code></pre>
+<h1 id="二-在实例所属类中引入封装好的方法">二、在实例所属类中引入封装好的方法</h1>
+<h2 id="session"><code>session</code></h2>
+<p><strong>引入 <code>server-proxy</code> 中的方法进行封装</strong></p>
+<ol>
+<li>在 Task 原型中定义 uploadDocs 方法</li>
+</ol>
+<pre><code class="language-tsx">Task.prototype.uploadDocs.implementation = async function (data, taskid) {
+    const result = await serverProxy.tasks.uploadDocs(data, taskid);
+    return result
+}
+</code></pre>
+<ol start="2">
+<li>用<code>apiWrapper</code>来调用原型方法</li>
+</ol>
+<pre><code class="language-tsx">async uploadDocs(id, docsData){
+    const result = await PluginRegistry
+    .apiWrapper.call(this, Task.prototype.uploadDocs, id, docsData);
+    return result;
+}
+</code></pre>
+<p><em>注意：这一整个步骤属于视具体业务而出现的操作，并非 Redux 必要步骤。</em></p>
+<h1 id="三-actioncreator-创建-action">三、ActionCreator - 创建 action</h1>
+<h2 id="tasks-actions"><code>tasks-actions</code></h2>
+<p><strong>定义了和 task 相关的 ActionCreator</strong></p>
+<p>在此文件中定义一个返回 <strong>TunkAction</strong> 的函数<code>uploadDocsAsync()</code>（此函数即为 ActionCreator），根据异步操作的执行结果触发相应动作。</p>
+<pre><code class="language-tsx">//声明了要用到的 actionTypes
+export enum TasksActionTypes {
+    //培训文档相关动作
+    UPLOAD_DOCS = 'UPLOAD_DOCS',
+    UPLOAD_DOCS_SUCCESS = 'UPLOAD_DOCS_SUCCESS',
+    UPLOAD_DOCS_FAILED = 'UPLOAD_DOCS_FAILED',
+	//...
+}
+
+//上传任务的培训文档
+export function uploadDocsAsync(data:any):
+ThunkAction&lt;Promise&lt;void&gt;, {}, {}, AnyAction&gt; {
+    return async (dispatch: ActionCreator&lt;Dispatch&gt;): Promise&lt;void&gt; =&gt; {
+        //进入函数，dispatch 触发 UPLOAD_DOCS 动作
+        dispatch({ type:TasksActionTypes.UPLOAD_DOCS })
+        try {
+        //尝试调用 2 中实例方法，上传培训文档
+        const res = await taskInstance.uploadDocs(data)
+        //成功，dispatch 触发 SUCCESS 动作，传递新的培训文档数据
+        dispatch({ type:TasksActionTypes.UPLOAD_DOCS_SUCCESS,payload:{docs:data}})
+        } catch (error) {
+            //失败，dispatch 触发 FAILED 动作，传递 error 
+            dispatch({ type:TasksActionTypes.UPLOAD_DOCS_FAILED,payload:{error:error} })
+        }
+    };
+}
+</code></pre>
+<h1 id="四-reducer-执行-action-修改-state">四、Reducer - 执行 action 修改 state</h1>
+<h2 id="task-reducer"><code>task-reducer</code></h2>
+<p><strong>响应 task 相关 action 并改变 state</strong></p>
+<p>reducer 文件结构：</p>
+<pre><code class="language-ts">import { TasksActionTypes } from 'actions/tasks-actions'; //引入 action 文件
+import { TasksState, Task } from './interfaces';//描述 TaskSate 的 ts 文件
+
+const defaultState: TasksState = {
+    //...
+};
+
+export default (state: TasksState = defaultState, action: AnyAction): TasksState =&gt; {
+    switch (action.type) {
+        case TasksActionTypes.UPLOAD_DOCS:{
+            //...
+        }
+        case TasksActionTypes.UPLOAD_DOCS_SUCCESS:{
+			//...
+        }
+        case TasksActionTypes.UPLOAD_DOCS_FAILED:{
+			//...
+        }
+        default:
+            return state;
+    }
+};
+</code></pre>
+<p>在 <code>tasks-reducer</code> 中新增对应三个action 的 case，更新 <code>TasksState</code> 中的 docs 数据和上传状态</p>
+<ul>
+<li>
+<p>UPLOAD_DOCS --- 修改 uploadDocs 的 Status</p>
+</li>
+<li>
+<p>UPLOAD_DOCS_SUCCESS --- 修改 uploadDocs 的 Status &amp; 修改 docs</p>
+</li>
+<li>
+<p>UPLOAD_DOCS_FAILED --- 修改 uploadDocs 的 Status</p>
+</li>
+</ul>
+<pre><code class="language-tsx"> case TasksActionTypes.UPLOAD_DOCS:{
+	//...
+ }
+ case TasksActionTypes.UPLOAD_DOCS_SUCCESS:{
+     const { doc } = action.payload;
+     const { uploadDocs } = state.activities;
+
+     return {
+         ...state,
+         docs:[...state.docs,doc],//添加新 doc
+         activities: {
+             ...state.activities,
+             uploadDocs: {
+                 ...uploadDocs,
+                 status:'UPLOADED'// 修改 status
+             },
+         },
+     };
+ }
+ case TasksActionTypes.UPLOAD_DOCS_FAILED:{
+	//...
+ }
+</code></pre>
+<h2 id="interfacests"><code>interfaces.ts</code></h2>
+<p><strong>TypeScript 文件，描述 reducer 中的数据类型</strong></p>
+<p>在此文件中定义 uploadDocs 与相关的状态成员</p>
+<pre><code class="language-ts">export interface TasksState {
+	//...
+    activities: {
+        //...
+        uploadDocs:{
+            status:string;
+            error:string;
+        };
+    };
+    //...
+    docs:TrainDoc[]
+}
+</code></pre>
+<h1 id="五-容器组件container和展示组件">五、容器组件（Container）和展示组件</h1>
+<p>经过以上几个步骤，终于可以将上传方法和状态值引入组件了，通过容器组件传递到展示组件，完成渲染。</p>
+<h2 id="trainingdocuments"><code>&lt;TrainingDocuments/&gt;</code></h2>
+<p>展示组件：只负责页面的渲染和数据绑定，只被其容器组件引用</p>
+<h2 id="trainingdocumentscontainer"><code>&lt;TrainingDocumentsContainer/&gt;</code></h2>
+<p>容器组件：负责页面的逻辑和状态获取</p>
+<p>创建一个 <code>train-doc</code> 组件的 container  <code>&lt;TrainingDocumentsContainer /&gt;</code>，在 Container 中将 dispatch 的操作映射到 Props。</p>
+<pre><code class="language-tsx">import { uploadDocsAsync } from 'actions/tasks-actions';//引入第三步中的 action
+
+//定义接口
+interface DispatchToProps {
+    onUploadDocs(data:object):void
+    onGetDocs(taskId:number):void
+    onDeleteDocs(taskId:number,docId:number):void
+}
+
+//将 dispatch 映射到 Props
+function mapDispatchToProps(dispatch: any): DispatchToProps {
+    return {
+        onUploadDocs: (data: object):void=&gt; dispatch(uploadDocsAsync(data))
+    };
+}
+
+//这里也可以简写，react-redux 会自动处理
+const mapDispatchToProps = {
+        onUploadDocs:uploadDocsAsync,
+        onGetDocs: getDocsAsync,
+        onDeleteDocs: deleteDocsAsync
+}
+
+function TrainingDocumentsContainer(props: StateToProps &amp; DispatchToProps &amp; OwnProps): JSX.Element {
+    const {
+        tasks,//tasks 是在前端 redux 中保存的 TaskState 实例，存储着 task 的状态值，参见第四步中的 interface.ts
+        onUploadDocs,
+    } = props;
+    
+    // 上传状态
+    const upLoading = (tasks.activities.uploadDocs.status == 'UPLOADING')
+    
+    // 当前 task 文档列表
+	const taskDocs = (tasks.docs)
+
+    // 第一次渲染页面时，先获取一次 task 的状态值
+    useEffect(()=&gt;{
+        onGetDocs(taskId)
+    },[])
+
+    return (
+        &lt;TrainingDocuments 
+            taskDocs={taskDocs}
+            upLoading = {upLoading}
+            onUploadDocs = {onUploadDocs}
+        /&gt;
+    );
+}
+
+// 将容器组件与状态连接起来
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(TrainingDocumentsContainer);
+</code></pre>
+<h1 id="效果展示">效果展示</h1>
+<figure data-type="image" tabindex="1"><img src="https://gitee.com/yxon123/gitee-sources/raw/master//Images/t01bd801d144d21cb41.png" alt="image-20210322115645319" loading="lazy"></figure>
+<h1 id="总结">总结</h1>
+<p>Redux 不关心数据在视图层面的具体作用，它将所有数据的当前值保存为一个 <code>state</code>，可以理解为数据“快照”。数据的一切变化，即是从旧的<code>state</code>到新的<code>state</code>的变化过程，同时运用中间件 <code>redux-logger</code>，对这个变化过程做一次记录。<strong>概括来说，Redux的思想是把有共享需要的「数据和数据逻辑」与「展示逻辑」进行了分离，将修改数据的操作视为为不同的 <code>action</code>，在每一个 <code>action</code>前后，数据快照 <code>state</code>产生变化。</strong></p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#%E9%9B%B6-%E5%89%8D%E8%A8%80">零、前言</a>
+<ul>
+<li><a href="#%E8%83%8C%E6%99%AF">背景</a></li>
+<li><a href="#%E5%88%86%E6%9E%90">分析</a></li>
+</ul>
+</li>
+<li><a href="#%E4%B8%80-%E7%9B%B4%E6%8E%A5%E8%B0%83%E7%94%A8%E5%90%8E%E7%AB%AF-api">一、 直接调用后端 API</a>
+<ul>
+<li><a href="#server-proxy"><code>server-proxy</code></a></li>
+</ul>
+</li>
+<li><a href="#%E4%BA%8C-%E5%9C%A8%E5%AE%9E%E4%BE%8B%E6%89%80%E5%B1%9E%E7%B1%BB%E4%B8%AD%E5%BC%95%E5%85%A5%E5%B0%81%E8%A3%85%E5%A5%BD%E7%9A%84%E6%96%B9%E6%B3%95">二、在实例所属类中引入封装好的方法</a>
+<ul>
+<li><a href="#session"><code>session</code></a></li>
+</ul>
+</li>
+<li><a href="#%E4%B8%89-actioncreator-%E5%88%9B%E5%BB%BA-action">三、ActionCreator - 创建 action</a>
+<ul>
+<li><a href="#tasks-actions"><code>tasks-actions</code></a></li>
+</ul>
+</li>
+<li><a href="#%E5%9B%9B-reducer-%E6%89%A7%E8%A1%8C-action-%E4%BF%AE%E6%94%B9-state">四、Reducer - 执行 action 修改 state</a>
+<ul>
+<li><a href="#task-reducer"><code>task-reducer</code></a></li>
+<li><a href="#interfacests"><code>interfaces.ts</code></a></li>
+</ul>
+</li>
+<li><a href="#%E4%BA%94-%E5%AE%B9%E5%99%A8%E7%BB%84%E4%BB%B6container%E5%92%8C%E5%B1%95%E7%A4%BA%E7%BB%84%E4%BB%B6">五、容器组件（Container）和展示组件</a>
+<ul>
+<li><a href="#trainingdocuments"><code>&lt;TrainingDocuments/&gt;</code></a></li>
+<li><a href="#trainingdocumentscontainer"><code>&lt;TrainingDocumentsContainer/&gt;</code></a></li>
+</ul>
+</li>
+<li><a href="#%E6%95%88%E6%9E%9C%E5%B1%95%E7%A4%BA">效果展示</a></li>
+<li><a href="#%E6%80%BB%E7%BB%93">总结</a></li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://davidyangblog.github.io/post/ru-he-yong-git-re-xiu-fu-zhu-fen-zhi-shang-de-bug/">
+              <h3 class="post-title">
+                如何用 git 热修复主分支上的 bug？
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: '4a5e4e83a5295ba2d8f8',
+    clientSecret: '9382c9ac4da5e840f59d30e324fe29ddebb190b7',
+    repo: 'gitTalkRepo',
+    owner: 'davidyangblog',
+    admin: ['davidyangblog'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://davidyangblog.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

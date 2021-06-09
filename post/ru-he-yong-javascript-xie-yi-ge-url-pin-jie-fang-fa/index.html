@@ -1,0 +1,377 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>如何用 JavaScript 写一个 URL 拼接方法？ | Gridea</title>
+<link rel="shortcut icon" href="https://davidyangblog.github.io/favicon.ico?v=1623208831957">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://davidyangblog.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="如何用 JavaScript 写一个 URL 拼接方法？ | Gridea - Atom Feed" href="https://davidyangblog.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="「如何」系列第五篇，五个步骤完成了一道经典前端面试题。
+
+前言
+URL 拼接是一个经典的前端面试题，它除了考察面试者对各种边界情况考虑的细致程度，也涉及到【数组方法】、【原型链】等基本知识。
+一、问题
+现有一串url（string 类型），..." />
+    <meta name="keywords" content="" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://davidyangblog.github.io">
+  <img class="avatar" src="https://davidyangblog.github.io/images/avatar.png?v=1623208831957" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              如何用 JavaScript 写一个 URL 拼接方法？
+            </h2>
+            <div class="post-info">
+              <span>
+                2021-06-09
+              </span>
+              <span>
+                7 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>「如何」系列第五篇，五个步骤完成了一道经典前端面试题。</p>
+<!-- more -->
+<h1 id="前言">前言</h1>
+<p>URL 拼接是一个经典的前端面试题，它除了考察面试者对各种边界情况考虑的细致程度，也涉及到【数组方法】、【原型链】等基本知识。</p>
+<h1 id="一-问题">一、问题</h1>
+<p>现有一串<code>url</code>（string 类型），和一个查询对象<code>newQuery</code>（JSON ），请编写一个函数，输入<code>url</code>和<code>newQuery</code>，输出新的<code>url</code>：</p>
+<pre><code class="language-js">const newQuery = {
+    a:1,
+    b:&quot;NewString&quot;,
+    d:&quot;?&amp;*:;&quot;,
+    e:[11,22,33],
+    f:false,
+    g:null,
+    h:undefined
+}
+
+const url = &quot;http://example.com/pathname/query?d=1&amp;e=2&quot;
+
+function concatQuery = (url,newQuery)=&gt;{
+    //...
+    return newUrl
+}
+</code></pre>
+<h1 id="二-分析">二、分析</h1>
+<p><strong>流程图</strong></p>
+<figure data-type="image" tabindex="1"><img src="https://gitee.com/yxon123/gitee-sources/raw/master//Images/%E6%9C%AA%E5%91%BD%E5%90%8D%E6%96%87%E4%BB%B6%20(2).png" alt="未命名文件 (2)" loading="lazy"></figure>
+<p><strong>坑点</strong></p>
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox" id="task-item-161586"><label class="task-list-item-label" for="task-item-161586"> 输入是否为空？==> JavaScript 空值检测/空对象检测</label></li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox" id="task-item-382922"><label class="task-list-item-label" for="task-item-382922"> 新旧 query 部分是否有重名？==> 利用对象键值的唯一性去重</label></li>
+<li class="task-list-item"><input class="task-list-item-checkbox" checked="" disabled="" type="checkbox" id="task-item-1026016"><label class="task-list-item-label" for="task-item-1026016"> 特殊字符处理 ==> 正则过滤特殊字符/url 内容转义</label></li>
+</ul>
+<h1 id="三-步骤详解">三、步骤详解</h1>
+<h2 id="31-第一步空值检测">3.1 第一步：空值检测</h2>
+<pre><code class="language-js">function concatQuery(){
+    if(!url){
+        return 'The origin url is empty'
+    }
+    if(newQuery.toString()=='{}'){
+        return url
+    }else{
+		//...
+    }
+}
+</code></pre>
+<p>注意对<code>newQuery</code>判断的方法，因为涉及到隐式转换，<code>if(value)</code>和<code>if(value==true)</code>不适宜于判断空对象，会出现像下面这个例子展示的问题：</p>
+<pre><code class="language-js">let empty = {}
+let result = ''
+
+if(empty==true){
+    result = 'It is true'
+}else if (empty==false){
+    result = 'It is false'
+}else if (!empty){
+    result = '×'
+}else if (empty){
+    result = '√'
+}
+console.log(result)// =&gt; '√'
+</code></pre>
+<p>所以，</p>
+<ol>
+<li>检测<code>url</code>是否为<strong>空字符串</strong>，可以直接使用原值判断</li>
+<li>检测<code>newQuery</code>是否为<strong>空对象</strong>，可以使用
+<ol>
+<li><code>Object.prototype.tostring.call(newQuery)</code>或<code>newQuery.toString()</code></li>
+<li><code>JSON.stringfy(newQuery)</code></li>
+</ol>
+</li>
+</ol>
+<h2 id="32-第二步原-url-解析">3.2 第二步：原 url 解析</h2>
+<pre><code class="language-js">const url = &quot;http://example.com/pathname/query?d=1&amp;e=2&quot;
+</code></pre>
+<p>要解析如上的<code>url</code>输入，我们需要对其进行预处理，拆分为两个部分</p>
+<figure data-type="image" tabindex="2"><img src="https://gitee.com/yxon123/gitee-sources/raw/master//Images/url%20(1).png" alt="url (1)" loading="lazy"></figure>
+<p>在浏览器实现中，有一种巧妙的方式来拆分原<code>url</code></p>
+<pre><code class="language-js">var parser = document.createElement('a');      
+parser.href = &quot;http://example.com/pathname/query?d=1&amp;e=2&quot;
+ 
+parser.origin; // =&gt; &quot;http://example.com&quot;
+parser.pathname; // =&gt; &quot;/pathname/query&quot;    
+parser.search;   // =&gt; &quot;?d=1&amp;e=2&quot;  
+
+let urlLocation = parser.origin + parser.pathname
+let queryString = parser.search.slice(1)//截取问号后的部分
+</code></pre>
+<p>当然，也可以直接使用<code>?</code>作为分隔符来拆分</p>
+<pre><code class="language-js">const url = &quot;http://example.com/pathname/query?d=1&amp;e=2&quot;
+let splitUrl = url.split('?') 
+// =&gt; [&quot;http://example.com/pathname/query&quot;, &quot;d=1&amp;e=2&quot;]
+
+let urlLocation = splitUrl[0]
+let queryString = splitUrl[1]
+</code></pre>
+<p>对于得到的<code>query</code>部分的字符串，再对其进行对象化</p>
+<pre><code class="language-js">let queryObj = {}
+let queryArray = queryString.split('&amp;')
+// =&gt;  [&quot;d=1&quot;, &quot;e=2&quot;]
+
+for (let value of queryArray){
+    valueArray = value.split('=')
+    queryObj[valueArray[0]] = valueArray[1]
+}
+
+console.log(queryObj) 
+// =&gt; {d:&quot;1&quot;, e=&quot;2&quot;}
+</code></pre>
+<p>到这一步我们就完成了对原url的所有解析过程，网上找了一下，有一些url解析的<a href="https://github.com/websanova/js-url">轮子</a>，但普遍不包含query字符串部分的解析，因为这部分大概率是后端的业务场景。</p>
+<h2 id="33-第三步对象合并">3.3 第三步：对象合并</h2>
+<p>接下来需要去合并新旧两个<code>query</code>对象，使用析构操作符<code>...</code>，可以对两个可能存在同名属性的对象进行<strong>去重+合并</strong>。</p>
+<pre><code class="language-js">let queryObj = {
+    a:undefined,
+    b:&quot;OldString&quot;,
+    c:5,
+    d:&quot;DDDD&quot;
+}
+
+const newQuery = {
+    a:1,
+    b:&quot;NewString&quot;,
+    d:&quot;?&amp;*:;&quot;,
+    e:[11,22,33],
+    f:false,
+    g:null,
+    h:undefined
+}
+
+queryObj = {
+    ...queryObj,
+    ...newQuery
+}
+/*
+ ==&gt;
+{
+    a: 1,
+    b: &quot;2&quot;,
+    c: 5,
+    d: &quot;?&amp;*:;&quot;,
+    e: [11, 22, 33],
+    f: false,
+    g: null,
+    h: undefined
+}
+*/
+</code></pre>
+<h2 id="34-第四步字符串生成">3.4 第四步：字符串生成</h2>
+<pre><code class="language-js">const queryObj = {    a: 1,    b: &quot;2&quot;,    c: 5,    d: &quot;?&amp;*:;&quot;,    e: [11, 22, 33],    f: false,    g: null,    h: undefined}
+</code></pre>
+<p>这一步是<code>3.2 原 url 解析</code>的逆过程，需要将新生成的<code>query</code>对象转成字符串，对于每个需要传递的字段，</p>
+<p>使用<code>encodeURIComponent()</code>进行一次转义：</p>
+<pre><code class="language-js">let newQueryString = &quot;&quot;for(let key in queryObj){    let valueStr = Object.prototype.toString.call(queryObj[key])    // 过滤掉值为 null 或者 undifined 的字段，将其余字段拼接    if(valueStr!=&quot;[object Null]&quot;&amp;&amp; valueStr!=&quot;[object Undefined]&quot;){        newQueryString = newQueryString + key + &quot;=&quot; + encodeURIComponent(queryObj[key]) + &quot;&amp;&quot;     }}console.log(newQueryString)// =&gt; a=1&amp;b=2&amp;c=5&amp;d=%3F%26*%3A%3B&amp;e=11%2C22%2C33&amp;f=false&amp;
+</code></pre>
+<h2 id="35-第五步-url-生成">3.5 第五步： url 生成</h2>
+<p>将<code>3.2 第二步</code>中拆分放在一边的<code>urlLocation</code>与新生成的<code>queryString</code>进行合并然后输出</p>
+<pre><code class="language-js">//urlLocation = &quot;http://example.com/pathname/query&quot;//queryString = &quot;a=1&amp;b=2&amp;c=5&amp;d=%3F%26*%3A%3B&amp;e=11%2C22%2C33&amp;f=false&amp;&quot;let newUrl = urlLocation + &quot;?&quot; + newQueryStringreturn newUrl
+</code></pre>
+<h2 id="36-完整代码">3.6 完整代码</h2>
+<p>大功告成！完整代码如下：</p>
+<pre><code class="language-js">const newQuery = {    a:1,    b:&quot;NewString&quot;,    d:&quot;?&amp;*:;&quot;,    e:[11,22,33],    f:false,    g:null,    h:undefined}const url = &quot;http://example.com/pathname/query?d=1&amp;e=2&quot;function concatQuery(url, newQuery){    if(!url){        return 'The origin url is empty'    }    if(newQuery.toString()=='{}'){        return url    }else{            let splitUrl = url.split('?')             let urlLocation = splitUrl[0]            let queryString = splitUrl[1]            let queryObj = {}            let queryArray = queryString.split('&amp;')            for (let value of queryArray){                valueArray = value.split('=')                queryObj[valueArray[0]] = valueArray[1]            }            queryObj = {                ...queryObj,                ...newQuery            }            let newQueryString = &quot;&quot;            for(let key in queryObj){                let valueStr = Object.prototype.toString.call(queryObj[key])                if(valueStr!=&quot;[object Null]&quot;&amp;&amp; valueStr!=&quot;[object Undefined]&quot;){                    newQueryString = newQueryString + key + &quot;=&quot; + encodeURIComponent(queryObj[key]) + &quot;&amp;&quot;                 }            }            let newUrl = urlLocation + &quot;?&quot; + newQueryString            return newUrl    }}let newUrl = concatQuery(url, newQuery)console.log(newUrl)
+</code></pre>
+<h1 id="四-总结">四、总结</h1>
+<p>代码不长，但花了我很长时间来查证细节，发现自己对一些数组方法熟悉程度还是不够，比如数组和字符串有一些方法同名且用法类似（比如<code>indexof</code>，<code>slice</code>），有一些则不通用（比如属于数组的<code>splice</code>），具体可以参考<a href="https://www.cnblogs.com/jing-tian/p/12067632.html">另一篇文章</a>。另外，对于原<code>url</code>不含query的情况没有在文章中展现，只需要在<code>3.2 第二步</code>中加一层判断即可，此处不再赘述。</p>
+<p><strong>参考</strong></p>
+<p><a href="https://www.runoob.com/jsref/jsref-encodeuricomponent.html">JavaScript encodeURIComponent() 函数</a></p>
+<p><a href="https://www.cnblogs.com/jing-tian/p/12067632.html">js数组与字符串类型相同方法的比较</a></p>
+<p><a href="https://www.jianshu.com/p/bc4f25f9e087/">JS中解析URL的简单方法</a></p>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li><a href="#%E5%89%8D%E8%A8%80">前言</a></li>
+<li><a href="#%E4%B8%80-%E9%97%AE%E9%A2%98">一、问题</a></li>
+<li><a href="#%E4%BA%8C-%E5%88%86%E6%9E%90">二、分析</a></li>
+<li><a href="#%E4%B8%89-%E6%AD%A5%E9%AA%A4%E8%AF%A6%E8%A7%A3">三、步骤详解</a>
+<ul>
+<li><a href="#31-%E7%AC%AC%E4%B8%80%E6%AD%A5%E7%A9%BA%E5%80%BC%E6%A3%80%E6%B5%8B">3.1 第一步：空值检测</a></li>
+<li><a href="#32-%E7%AC%AC%E4%BA%8C%E6%AD%A5%E5%8E%9F-url-%E8%A7%A3%E6%9E%90">3.2 第二步：原 url 解析</a></li>
+<li><a href="#33-%E7%AC%AC%E4%B8%89%E6%AD%A5%E5%AF%B9%E8%B1%A1%E5%90%88%E5%B9%B6">3.3 第三步：对象合并</a></li>
+<li><a href="#34-%E7%AC%AC%E5%9B%9B%E6%AD%A5%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%94%9F%E6%88%90">3.4 第四步：字符串生成</a></li>
+<li><a href="#35-%E7%AC%AC%E4%BA%94%E6%AD%A5-url-%E7%94%9F%E6%88%90">3.5 第五步： url 生成</a></li>
+<li><a href="#36-%E5%AE%8C%E6%95%B4%E4%BB%A3%E7%A0%81">3.6 完整代码</a></li>
+</ul>
+</li>
+<li><a href="#%E5%9B%9B-%E6%80%BB%E7%BB%93">四、总结</a></li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://davidyangblog.github.io/post/ru-he-pan-duan-javascript-shu-ju-lei-xing/">
+              <h3 class="post-title">
+                如何判断 JavaScript 数据类型？
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: '4a5e4e83a5295ba2d8f8',
+    clientSecret: '9382c9ac4da5e840f59d30e324fe29ddebb190b7',
+    repo: 'gitTalkRepo',
+    owner: 'davidyangblog',
+    admin: ['davidyangblog'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://davidyangblog.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

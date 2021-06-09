@@ -1,0 +1,366 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>如何判断 JavaScript 数据类型？ | Gridea</title>
+<link rel="shortcut icon" href="https://davidyangblog.github.io/favicon.ico?v=1623208831957">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://davidyangblog.github.io/styles/main.css">
+<link rel="alternate" type="application/atom+xml" title="如何判断 JavaScript 数据类型？ | Gridea - Atom Feed" href="https://davidyangblog.github.io/atom.xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
+
+
+
+    <meta name="description" content="「如何」系列第四篇，分析了四种判断JavaScript数据类型的方法，总结了1个判断思路。
+
+一、问题
+在 ECMAScript 规范中，共定义了 7 种数据类型，分为 基本类型 和 引用类型 两大类，如下所示：
+
+基本类型：String、..." />
+    <meta name="keywords" content="" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+    <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <div class="main-content">
+        <div class="site-header">
+  <a href="https://davidyangblog.github.io">
+  <img class="avatar" src="https://davidyangblog.github.io/images/avatar.png?v=1623208831957" alt="">
+  </a>
+  <h1 class="site-title">
+    Gridea
+  </h1>
+  <p class="site-description">
+    温故而知新
+  </p>
+  <div class="menu-container">
+    
+      
+        <a href="/" class="menu">
+          首页
+        </a>
+      
+    
+      
+        <a href="/archives" class="menu">
+          归档
+        </a>
+      
+    
+      
+        <a href="/tags" class="menu">
+          标签
+        </a>
+      
+    
+      
+        <a href="/post/about" class="menu">
+          关于
+        </a>
+      
+    
+  </div>
+  <div class="social-container">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </div>
+</div>
+
+        <div class="post-detail">
+          <article class="post">
+            <h2 class="post-title">
+              如何判断 JavaScript 数据类型？
+            </h2>
+            <div class="post-info">
+              <span>
+                2021-06-08
+              </span>
+              <span>
+                7 min read
+              </span>
+              
+            </div>
+            
+            <div class="post-content-wrapper">
+              <div class="post-content">
+                <p>「如何」系列第四篇，分析了四种判断JavaScript数据类型的方法，总结了1个判断思路。</p>
+<!-- more -->
+<h2 id="一-问题">一、问题</h2>
+<p>在 ECMAScript 规范中，共定义了 7 种数据类型，分为 基本类型 和 引用类型 两大类，如下所示：</p>
+<blockquote>
+<p><strong>基本类型</strong>：String、Number、Boolean、Symbol、Undefined、Null</p>
+<p><strong>引用类型</strong>：Object</p>
+</blockquote>
+<p>ECMAScript 采用的是松散类型，开发过程中常常会遇到需要检测数据类型的情况，但是JavaScript提供给我们的方法效果各有优劣，本文分析了<strong>四种</strong>检测数据类型的方法，并在文章末尾提供了一种组合判断的思路。</p>
+<h2 id="二-方法">二、方法</h2>
+<h3 id="21-typeof">2.1 typeof</h3>
+<pre><code class="language-js">typeof   123　　 	//&quot;number&quot;
+typeof   'abc'　　//&quot;string&quot;
+typeof    true       //&quot;boolean&quot;
+typeof    undefined   //&quot;undefined&quot;
+typeof    Symbol('a')   //&quot;symbol&quot;
+typeof    null        //&quot;object&quot;
+typeof    { }           //&quot;object&quot;
+typeof    [ ]           //&quot;object&quot;
+typeof    console.log()       //&quot;function&quot;
+</code></pre>
+<p>对于<strong>基本类型</strong>：</p>
+<ul>
+<li>
+<p>对 <code>null</code>使用返回 <code>&quot;object&quot;</code></p>
+</li>
+<li>
+<p>对其他使用返回其<strong>字符串</strong>形式的<strong>类型名</strong></p>
+</li>
+</ul>
+<p>对于<strong>引用类型</strong>：</p>
+<ul>
+<li>
+<p>对 function 使用返回 <code>&quot;function&quot;</code></p>
+</li>
+<li>
+<p>对其他引用数据类型返回 <code>&quot;object&quot;</code></p>
+</li>
+</ul>
+<h3 id="22-instanceof">2.2 instanceof</h3>
+<p><code>instanceof</code> 用于判断某个变量是否是某种类型的实例，返回结果是一个<strong>布尔值</strong>，需要两个参数：<code>a incetance of B</code>中，<code>a</code>是待判断的变量， <code>B</code>是作为判断标准的<strong>引用类型</strong>。</p>
+<pre><code class="language-js">let a=[]
+a instanceof Array //true
+a instanceof Object //true
+</code></pre>
+<p>「<strong>本质上<code>a instanceof B</code>判断的是 <code>a</code>的原型链上是否存在<code>B.prototype</code></strong>」，但无法判断<code>a</code><strong>直接所属</strong>的类型。所以在上面的例子中，<strong><code>a</code> 是<code>Array</code>的实例，也是<code>Object</code>的实例</strong>。</p>
+<p>另外对于使用字面量方法定义的基本数据类型，使用 <code>instanceof</code>来判断它们「<strong>是否是某包装类型的实例</strong>」会返回 <code>false</code>，这在<strong>技术是是完全正确的</strong>，但在实际使用中作为基本类型的判断符就不太理想，如下所示：</p>
+<pre><code class="language-js">let b = 1
+b instanceof Number //false
+
+let c = &quot;c&quot;
+c instanceof String //false
+
+let d = true
+d instanceof Boolean //false
+</code></pre>
+<p><code>instanceof</code> 操作符还有一个问题在于，它<strong>假定只有一个全局执行环境</strong>。如果网页中包含多个框架，那实际上就存在两个以上不同的全局执行环境，从而存在两个以上不同版本的构造函数。如果你从一个框架向另一个框架传入一个数组，那么传入的数组与在第二个框架中原生创建的数组分别具有各自不同的构造函数。</p>
+<pre><code class="language-js">var iframe = document.createElement('iframe');
+document.body.appendChild(iframe);
+IframeArray = window.frames[0].Array;
+var arr =new IframeArray(1,2,3);// [1,2,3]
+arr instanceof Array;// false
+</code></pre>
+<p>针对数组的这个问题，<strong>ES5</strong> 提供了 <code>Array.isArray()</code> 方法 。该方法用以确认某个对象本身是否为 <code>Array</code> 类型，而不区分该对象在哪个环境中创建。</p>
+<pre><code class="language-js">if(Array.isArray(arr)){
+   //对数组执行某些操作
+}
+</code></pre>
+<p><code>Array.isArray()</code>本质上检测的是对象的 <code>[[Class]]</code> 值，<code>[[Class]]</code> 是对象的一个内部属性，里面包含了对象的类型信息，其格式为 <code>[object Xxx]</code> ，<code>Xxx</code> 就是对应的具体类型 。对于数组而言，<code>[[Class]]</code> 的值就是 <code>[object Array]</code>，所以这里直接使用方法四中的<code>Object.prototype.toString.call(arr)</code>也是可以的 。</p>
+<h3 id="23-constructor">2.3 constructor</h3>
+<p><code>constructor</code>访问的是<strong>对象原型</strong>上的<code>cosntructor</code>属性，使用方法如下：</p>
+<pre><code class="language-js">let a=[]
+a.constructor //ƒ Array() { [native code] }
+a.constructor == Array //true
+
+let b=1
+b.contructor == Number //true
+
+let c=&quot;str&quot;
+c.constructor == String //true
+
+let d=true
+d.constructor == Boolean //true
+</code></pre>
+<p>但是这里发生了一件很奇怪的事，不同于<code>incetanceof</code>的判断结果，为什么使用<code>constructor</code>可以正确地判断基本类型？参考《JavaScript 高级程序设计》对<strong>基本包装类型</strong>的解释，</p>
+<blockquote>
+<p>在读取模式中访问字符串（或数字、布尔值）时，后台都会自动完成下列处理。<br>
+(1) 创建String类型的一个实例；<br>
+(2) 在实例上调用指定的方法；<br>
+(3) 销毁这个实例。</p>
+</blockquote>
+<p>所以，事实上这里的<code>b.contructor</code>访问的是后台<strong>临时</strong>创建的基本包装类型的<code>constructor</code>属性。</p>
+<p>这种方法有<strong>两个缺陷</strong>：</p>
+<ol>
+<li>
+<p><code>null</code>和 <code>undefined</code>是没有 <code>constructor</code>属性的，所以无法通过这种方法判断</p>
+</li>
+<li>
+<p>函数的 <code>constructor</code>是不稳定的，这个主要体现在自定义对象上，当开发者重写 <code>prototype</code>后，原有的 <code>constructor</code><strong>引用会丢失</strong>，<code>constructor</code>变为重写的<code>prototype</code>的<code>constructor</code>。（重写<code>prototype</code>为 <code>Number</code>实例，则此后新建的<code>Parent</code>实例的<code>constructor</code>变为<code>Number</code>，如下所示）</p>
+</li>
+</ol>
+<pre><code class="language-js">function Parent(){}
+
+let a = new Parent()
+a.constructor == Parent //true
+
+Parent.prototype = {prop:&quot;new prototype props&quot;}
+
+let b = new Parent()
+b.constructor == Parent //false
+b.constructor == Object //true
+
+Parent.prototype = new Number()
+
+let c = new Parent()
+c.constructor == Parent //false
+c.constructor == Number //true
+</code></pre>
+<p>《JavaScript 高级程序设计》提供了一种解决方案，在重写原型的同时将<code>constructor</code>属性覆盖为需要的值：</p>
+<pre><code class="language-js">function Parent(){}
+
+Parent.prototype = {
+    constructor: Parent,
+    props:&quot;new prototype props&quot;
+}
+
+let a = new Parent()
+a.constructor == Parent //true
+</code></pre>
+<blockquote>
+<p><strong>注意</strong>，以这种方式重设<code>constructor</code>属性会导致它的<code>[[Enumerable]]</code>特性被设置为<code>true</code>。</p>
+</blockquote>
+<h3 id="24-tostring">2.4 toString</h3>
+<p><code>toString()</code> 是 <code>Object</code> 的原型方法，调用该方法，默认返回当前对象的 <code>[[Class]]</code>。这是一个内部属性，其格式为 <code>[object Xxx]</code> ，其中<code>Xxx</code>就是对象的类型。对于 <code>Object</code>对象，直接调用 <code>toString()</code> 就能返回 <code>[object Object]</code> 。而对于其他对象，则需要通过 <code>call() / apply()</code> 来调用才能返回正确的类型信息。</p>
+<pre><code class="language-js">Object.prototype.toString.call('') ;  // [object String]Object.prototype.toString.call(1) ;   // [object Number]Object.prototype.toString.call(true) ;// [object Boolean]Object.prototype.toString.call(Symbol());//[object Symbol]Object.prototype.toString.call(undefined) ;// [object Undefined]Object.prototype.toString.call(null) ;// [object Null]Object.prototype.toString.call(function Function(){}) ;// [object Function]Object.prototype.toString.call(new Date()) ;// [object Date]Object.prototype.toString.call([]) ;// [object Array]Object.prototype.toString.call(new RegExp()) ;// [object RegExp]Object.prototype.toString.call(new Error()) ;// [object Error]Object.prototype.toString.call(document) ;// [object HTMLDocument]Object.prototype.toString.call(window) ;//[object global] window 是全局对象 global 的引用
+</code></pre>
+<p>这种方法可以准确的判断<strong>所有基本类型和原生引用类型</strong>，但是并<strong>不能用于判断自定义类型</strong>。</p>
+<pre><code class="language-js">function Parent(){}let a = new Parent()Object.prototype.toString.call(a) //[object Object]
+</code></pre>
+<h2 id="三-总结">三、总结</h2>
+<ol>
+<li><code>typeof</code> 不可用于判断<code>null</code>，以及「<code>function</code>以外的<strong>引用类型</strong>」</li>
+<li><code>instanceof</code> 用于判断「后者的原型是否在前者的<strong>原型链</strong>上」</li>
+<li><code>constructor</code> 无法用于判断<code>null</code>和<code>undefined</code>，因为他们不具有<code>constructor</code>属性; 重写<code>prototype</code>时<code>constructor</code>会丢失</li>
+<li><code>toString()</code> 不可用于判断<strong>原生引用类型</strong>之外的「<strong>自定义类型</strong>」</li>
+</ol>
+<p>可以看到每种方法都有各自的优势和缺陷，针对具体需求的不同，我们可以灵活的使用某一种方法，或者结合多种方法来达成目的。这里提供一种思路：</p>
+<ol>
+<li>
+<p>第一步，使用<code>toString</code>进行判断，若为<strong>基本类型</strong>或<strong>原生引用类型</strong>，可以直接输出结果</p>
+</li>
+<li>
+<p>第二步，对于第一步判断结果为<code>[object Object]</code>的<strong>自定义引用类型</strong>，使用<code>constructor</code>进行二次判断</p>
+</li>
+</ol>
+
+              </div>
+              <div class="toc-container">
+                <ul class="markdownIt-TOC">
+<li>
+<ul>
+<li><a href="#%E4%B8%80-%E9%97%AE%E9%A2%98">一、问题</a></li>
+<li><a href="#%E4%BA%8C-%E6%96%B9%E6%B3%95">二、方法</a>
+<ul>
+<li><a href="#21-typeof">2.1 typeof</a></li>
+<li><a href="#22-instanceof">2.2 instanceof</a></li>
+<li><a href="#23-constructor">2.3 constructor</a></li>
+<li><a href="#24-tostring">2.4 toString</a></li>
+</ul>
+</li>
+<li><a href="#%E4%B8%89-%E6%80%BB%E7%BB%93">三、总结</a></li>
+</ul>
+</li>
+</ul>
+
+              </div>
+            </div>
+          </article>
+        </div>
+
+        
+          <div class="next-post">
+            <div class="next">下一篇</div>
+            <a href="https://davidyangblog.github.io/post/ru-he-shi-yong-javascript-bian-ping-hua-shu-zu/">
+              <h3 class="post-title">
+                如何使用 JavaScript 扁平化数组？
+              </h3>
+            </a>
+          </div>
+        
+
+        
+          
+            <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+
+<div id="gitalk-container"></div>
+
+<script>
+
+  var gitalk = new Gitalk({
+    clientID: '4a5e4e83a5295ba2d8f8',
+    clientSecret: '9382c9ac4da5e840f59d30e324fe29ddebb190b7',
+    repo: 'gitTalkRepo',
+    owner: 'davidyangblog',
+    admin: ['davidyangblog'],
+    id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+    distractionFreeMode: false  // Facebook-like distraction free mode
+  })
+
+  gitalk.render('gitalk-container')
+
+</script>
+
+          
+
+          
+        
+
+        <div class="site-footer">
+  Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a>
+  <a class="rss" href="https://davidyangblog.github.io/atom.xml" target="_blank">
+    <i class="ri-rss-line"></i> RSS
+  </a>
+</div>
+
+      </div>
+    </div>
+
+    <script>
+      hljs.initHighlightingOnLoad()
+
+      let mainNavLinks = document.querySelectorAll(".markdownIt-TOC a");
+
+      // This should probably be throttled.
+      // Especially because it triggers during smooth scrolling.
+      // https://lodash.com/docs/4.17.10#throttle
+      // You could do like...
+      // window.addEventListener("scroll", () => {
+      //    _.throttle(doThatStuff, 100);
+      // });
+      // Only not doing it here to keep this Pen dependency-free.
+
+      window.addEventListener("scroll", event => {
+        let fromTop = window.scrollY;
+
+        mainNavLinks.forEach((link, index) => {
+          let section = document.getElementById(decodeURI(link.hash).substring(1));
+          let nextSection = null
+          if (mainNavLinks[index + 1]) {
+            nextSection = document.getElementById(decodeURI(mainNavLinks[index + 1].hash).substring(1));
+          }
+          if (section.offsetTop <= fromTop) {
+            if (nextSection) {
+              if (nextSection.offsetTop > fromTop) {
+                link.classList.add("current");
+              } else {
+                link.classList.remove("current");    
+              }
+            } else {
+              link.classList.add("current");
+            }
+          } else {
+            link.classList.remove("current");
+          }
+        });
+      });
+
+    </script>
+  </body>
+</html>

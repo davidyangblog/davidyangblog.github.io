@@ -2,30 +2,21 @@
   <head>
     <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>关于 | Gridea</title>
+<title>如何用 git 热修复主分支上的 bug？ | Gridea</title>
 <link rel="shortcut icon" href="https://davidyangblog.github.io/favicon.ico?v=1623208831957">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@2.3.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://davidyangblog.github.io/styles/main.css">
-<link rel="alternate" type="application/atom+xml" title="关于 | Gridea - Atom Feed" href="https://davidyangblog.github.io/atom.xml">
+<link rel="alternate" type="application/atom+xml" title="如何用 git 热修复主分支上的 bug？ | Gridea - Atom Feed" href="https://davidyangblog.github.io/atom.xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid+Serif:400,700">
 
 
 
-    <meta name="description" content="
-欢迎来到我的小站呀，很高兴遇见你！🤝
+    <meta name="description" content="「如何」系列第一篇，介绍 git 工具热修复主分支的方法。
 
-🏠 关于本站
-前端技术 / 区块链/ 个人生活
-👨‍💻 博主是谁
-以太坊钻石手
-比较轻松的北漂
-国内留学的留学生
-⛹ 兴趣爱好
-坚持按快门
-📬 来联系我
-即刻
-GitHub
-DavidYa..." />
+问题场景
+有时候我们需要修复一个线上（位于 master分支）的bug，但又不希望影响本地分支和其他分支。
+解决方案
+考虑从 master复制一个新分支 master_hotfi..." />
     <meta name="keywords" content="" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
     <script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
@@ -88,45 +79,109 @@ DavidYa..." />
         <div class="post-detail">
           <article class="post">
             <h2 class="post-title">
-              关于
+              如何用 git 热修复主分支上的 bug？
             </h2>
             <div class="post-info">
               <span>
-                2019-01-25
+                2021-06-06
               </span>
               <span>
-                1 min read
+                2 min read
               </span>
               
             </div>
             
             <div class="post-content-wrapper">
               <div class="post-content">
-                <blockquote>
-<p>欢迎来到我的小站呀，很高兴遇见你！🤝</p>
-</blockquote>
-<h2 id="关于本站">🏠 关于本站</h2>
-<p>前端技术 / 区块链/ 个人生活</p>
-<h2 id="博主是谁">👨‍💻 博主是谁</h2>
-<p>以太坊钻石手<br>
-比较轻松的北漂<br>
-国内留学的留学生</p>
-<h2 id="兴趣爱好">⛹ 兴趣爱好</h2>
-<p>坚持按快门</p>
-<h2 id="来联系我">📬 来联系我</h2>
-<p><a href="https://m.okjike.com/users/m980919">即刻</a><br>
-<a href="https://github.com/creeep123">GitHub</a><br>
-DavidYangPersonal@outlook.com</p>
+                <p>「如何」系列第一篇，介绍 git 工具热修复主分支的方法。</p>
+<!-- more -->
+<h3 id="问题场景">问题场景</h3>
+<p>有时候我们需要修复一个线上（位于 <code>master</code>分支）的bug，但又不希望影响本地分支和其他分支。</p>
+<h3 id="解决方案">解决方案</h3>
+<p>考虑从 <code>master</code>复制一个新分支 <code>master_hotfix</code>，在新分支上完成 bug 修复之后 <code>merge</code> 到 <code>master</code>分支，修复完成后删除 <code>master_hotfix</code>分支</p>
+<h3 id="步骤">步骤</h3>
+<ol>
+<li>
+<p><strong>暂存当前工作分支尚未 <code>commit</code> 的内容</strong></p>
+<ol>
+<li>
+<pre><code class="language-bash">git stash save &quot;save message&quot; 
+</code></pre>
+<p>执行存储时，添加备注，方便查找，只有<code>git stash</code> 也是可以的，但查找时不方便识别</p>
+</li>
+<li>
+<pre><code class="language-bash">git stash show
+</code></pre>
+<p>显示做了哪些改动，默认show第一个存储,如果要显示其他存贮，后面加<code>stash@{$num}</code>，比如第二个<code>git stash show stash@{1}</code></p>
+</li>
+</ol>
+</li>
+<li>
+<p><strong>从 <code>master</code> 复制新分支 <code>master_hotfix</code></strong></p>
+<ol>
+<li>
+<pre><code class="language-bash">git checkout master
+</code></pre>
+<p>切换到 <code>master</code> 分支</p>
+</li>
+<li>
+<pre><code class="language-bash">git checkout -b master_hotfix
+</code></pre>
+<p>从当前分支（<code>master</code>）复制到新分支开发</p>
+</li>
+<li>
+<pre><code class="language-bash">git branch --set-upstream-to=origin/master_hotfix
+</code></pre>
+<p>与远程分支进行关联</p>
+</li>
+<li>
+<pre><code class="language-bash">git pull
+</code></pre>
+<p>拉取验证</p>
+</li>
+</ol>
+</li>
+<li>
+<p><strong>在远程仓库将 <code>master_hotfix</code> merge 到<code>master</code> 分支</strong></p>
+</li>
+<li>
+<p><strong>删除 <code>master_hotfix</code>分支</strong></p>
+<ol>
+<li>
+<pre><code class="language-bash">git branch -D master_hotfix
+</code></pre>
+<p>删除本地分支</p>
+<p>注：<code>-D</code>是<code>--delete --force</code>的缩写,这样写可以在不检查 merge 状态的情况下删除分支</p>
+</li>
+<li>
+<pre><code class="language-bash">git push origin --delete master_hotfix
+</code></pre>
+<p>删除远程分支</p>
+</li>
+<li>
+<pre><code class="language-bash">git branch -a
+</code></pre>
+<p>查看所有分支（本地分支和远程分支），检验是否删除成功</p>
+</li>
+</ol>
+</li>
+</ol>
+<p><em><strong>参考</strong></em></p>
+<p><a href="https://www.jianshu.com/p/5068997164cb">git 删除分支 </a></p>
+<p><a href="https://www.cnblogs.com/wangfajun/p/10789231.html">Git复制已有分支到新分支开发</a></p>
 
               </div>
               <div class="toc-container">
                 <ul class="markdownIt-TOC">
 <li>
 <ul>
-<li><a href="#%E5%85%B3%E4%BA%8E%E6%9C%AC%E7%AB%99">🏠 关于本站</a></li>
-<li><a href="#%E5%8D%9A%E4%B8%BB%E6%98%AF%E8%B0%81">👨‍💻 博主是谁</a></li>
-<li><a href="#%E5%85%B4%E8%B6%A3%E7%88%B1%E5%A5%BD">⛹ 兴趣爱好</a></li>
-<li><a href="#%E6%9D%A5%E8%81%94%E7%B3%BB%E6%88%91">📬 来联系我</a></li>
+<li>
+<ul>
+<li><a href="#%E9%97%AE%E9%A2%98%E5%9C%BA%E6%99%AF">问题场景</a></li>
+<li><a href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88">解决方案</a></li>
+<li><a href="#%E6%AD%A5%E9%AA%A4">步骤</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
